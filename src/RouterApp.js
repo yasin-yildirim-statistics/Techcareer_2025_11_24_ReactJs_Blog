@@ -1,5 +1,14 @@
 // rfce ==> TAB
+
+// REACT
 import React from 'react';
+
+// I18N
+import { withTranslation } from 'react-i18next';
+
+// ROUTER
+
+// COMPONENTS
 import HeaderComponent from './components/HeaderComponent';
 import MainComponent from './components/MainComponent';
 import FooterComponent from './components/FooterComponent';
@@ -8,11 +17,17 @@ import FooterComponent from './components/FooterComponent';
 function RouterApp() {
   return (
     <React.Fragment>
-      <HeaderComponent logo="fa fa-apple" />
+      {/* HEADER */}
+      <HeaderComponent logo="fa-solid fa-blog" />
+
+      {/* MAIN */}
       <MainComponent />
-      <FooterComponent />
+
+      {/* FOOTER */}
+      <FooterComponent copy="&copy; Bütün Haklar Saklıdır." />
     </React.Fragment>
   );
 }
 
-export default RouterApp;
+// HOC withTranslation
+export default withTranslation()(RouterApp);
