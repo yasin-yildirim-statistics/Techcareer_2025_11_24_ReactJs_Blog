@@ -13,7 +13,6 @@ import {withTranslation} from 'react-i18next';
 // IMPORT
 import Swal from "sweetalert2"
 import toast from "react-hot-toast"
-import {start} from "@popperjs/core";
 import ReusabilityToast from "../../reusability/ReusabilityToast";
 
 // FUNCTION
@@ -449,13 +448,42 @@ function BlogCategoryList({props, t, i18n}) {
                         </datalist>
                     </div>{/*search*/}
 
+                    {/*FILTER*/}
+                    <div className="col-md-3">
+                        <label htmlFor="" className="form-label fw-semibold">Sayfa başına kayıt</label>
+                        <select
+                            className="form-slect"
+                            value={pageSize}
+                            onchange={(e) => setPageSize(Number(e.target.valueOf))}
+                            title="Filtreleme için"
+                        >
+                            <option value={5}>5 Veri Listele</option>
+                            <option value={10}>10 Veri Listele</option>
+                            <option value={15}>15 Veri Listele</option>
+                            <option value={50}>50 Veri Listele</option>
+                            <option value={100}>100 Veri Listele</option>
+                        </select>
+                    </div>
+
+                    {/*TOPLAM KAYIT*/}
+                    <div className="col-md-5 text-md-end">
+                        <label htmlFor="" className="form-label d-block fw-semibold">Toplam
+                            Kayıt</label>
+                    </div>
+
+                    <div className="d-flex justify-content-md-end alig-items-center gap-3">
+                        <span className="badge bg-secondary">{totalItems} Kayıt</span>
+                        <button
+                            type="button"
+                            className="btn btn-primary"
+                            onClick={openCreateModal}
+                        >
+                            <i className="fa-solid fa-plus me-1"/>
+                            {t("create")}
+                        </button>
+                    </div>
+
                 </div>{/*row*/}
-
-                {/*FILTER*/}
-                <div className="col-md-3">
-                    <label htmlFor="" className="form-label fw-semibold">Sayfa başına kayıt</label>
-
-                </div>
             </div> {/*container*/}
 
 
