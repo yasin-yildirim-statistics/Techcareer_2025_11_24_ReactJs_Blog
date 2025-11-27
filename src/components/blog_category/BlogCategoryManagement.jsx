@@ -1,16 +1,22 @@
-import React, { useEffect, useState } from 'react';
+// REACT
+import React, {useEffect, useState, useMemo} from 'react';
 
 // ROUTER
-import { Link, useNavigate } from 'react-router-dom';
+import {Link, useNavigate} from 'react-router-dom';
 
 // API LIST CALL
 import BlogCategoryApiService from '../../services/BlogCategoryApiService';
 
 // I18N
-import { withTranslation } from 'react-i18next';
+import {withTranslation} from 'react-i18next';
+
+// IMPORT
+import Swal from "sweetalert2"
+import toast from "react-hot-toast"
+import {start} from "@popperjs/core";
 
 // FUNCTION
-function BlogCategoryList({ props, t, i18n }) {
+function BlogCategoryList({props, t, i18n}) {
     // FIELD
 
     // ROUTER
@@ -19,22 +25,94 @@ function BlogCategoryList({ props, t, i18n }) {
     // STATE
     //const [] = React.useState();
     const [blogCategoryApiListData, setBlogCategoryApiListData] = useState([]); //default boş dizi
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
 
-    // EFFECT
+    // MODAL STATE
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [modalMode, setModalMode] = useState("show") // "show" | "create" | "edit"
+    const [selectedCategory, setSelectedCategory] = useState(null);
+
+    // FORM STATE (create/update)
+    const [formData, setFormData] = useState({
+        categoryName: "",
+    })
+    const [saving, setSaving] = useState(false);
+
+    // SEARCH, FILTER, PAGINATION STATE
+    const [searchTerm, setSearchTerm] = useState("");
+    const [pageSize, setPageSize] = useState(5);
+    const [currentPage, setCurrentPage] = useState(1);
+
+    // =====================================================
+    //      TOAST HELPER (react-hot-toast + ReusabilityToast)
+    // =====================================================
+    /**
+     * variant:
+     *  - "create"  -> yeşil arka plan
+     *  - "update"  -> mavi arka plan
+     *  - "delete"  -> kırmızı arka plan
+     *  - default   -> gri / nötr
+     */
+    const showToast = (title, variant = "default") => {
+        let style = {
+            borderRadius: "10px",
+            padding: "10px",
+            color: "#ffffff",
+            fontWeight: 500,
+            fontSize: "0.9rem",
+        };
+        let icon = "ℹ️";
+
+        switch (variant) {
+            case "create":
+                style.background = "#146c43"; // yeşil
+                icon = "✅";
+                break;
+            case "update":
+                style.background = "#0d6efd"; // mavi
+                icon = "ℹ️";
+                break;
+            case "delete":
+                style.background = "#842029"; // kırmızı
+                icon = "🗑️";
+                break;
+            default:
+                style.background = "#343a40"; // koyu gri
+                icon = "ℹ️";
+                break;
+        }
+
+        toast(title, {
+            icon,
+            style,
+            duration: 2500,
+        });
+    };
+
+
+    // =======================================================================
+    // EFFECT (LİSTEYİ ÇEK)
+    // =======================================================================
     useEffect(() => {
         // Component Did Mount
         fetchBlogList();
     }, []);
 
     // FUNCTION
-
     // FETCH BLOG LIST ASENKRON
     const fetchBlogList = async () => {
         try {
+
+            // Loading
+            setLoading(true);
+            setError(""); // Eğer daha önceden kalan hatalar varsa onu temizle
+
             // ASENKRON API ÇAĞRI
             // const response = await fetch('http://localhost:4444/blog/category/api/v1/list');
             const response = await BlogCategoryApiService.objectApiList();
 
+            // Eğer backentten gelen veri varsa
             if (response.status === 200) {
                 setBlogCategoryApiListData(response.data);
                 console.log(response);
@@ -44,9 +122,59 @@ function BlogCategoryList({ props, t, i18n }) {
             }
         } catch (error) {
             console.error('Blog Category fetchBlogList: ', error);
+        } finally {
+            setLoading(false); // Loading kapat(Zorunlu)
         }
     }; // end fetchBlogList
 
+    // =======================================================================
+    // EFFECT (FILTER + PAGINATION+ SEARCH )
+    // =======================================================================
+    useEffect(() => {
+        setCurrentPage(1); // Paginatin ilk sayfada başlat
+    }, [searchTerm, pageSize, blogCategoryApiListData.length]);
+
+    // =======================================================================
+    // USEMEMO
+    // =======================================================================
+    const {pageData, totalItems, totalPages} = useMemo(() => {
+
+        // Search (Küçük karakter+boşluksuz)
+        const normalized = searchTerm.toLowerCase().trim();
+
+        // Filter
+        const filtered = blogCategoryApiListData.filter((cat) => {
+            if (!normalized) return true;
+
+            // Backentten gelen gelen veriler
+            const idStr = String(cat.categoryId ?? "").toLowerCase();
+            const nameStr = String(cat.categoryName ?? "").toLowerCase();
+            const dateStr = String(cat.systemCreatedDate ?? "").toLowerCase();
+
+            return(
+                idStr.includes(normalized) ||
+                nameStr.includes(normalized) ||
+                dateStr.includes(normalized)
+            )
+        })
+
+        // Pagination
+        const total = filtered.length || 0;
+        const pages = total === 0 ? 1 : Math.ceil(total / pageSize);
+        const safeCurrentPage = Math.min(Math.max(1, currentPage), pages);
+       const startIndex = (safeCurrentPage-1)*pageSize;
+       const paged = filtered.slide(startIndex, startIndex+pageSize);
+
+       return{
+           pageData:paged,
+           totalItems:total,
+           totalPages:pages
+       }
+    },[blogCategoryApiListData,searchTerm,pageSize,currentPage]);
+
+    // =======================================================================
+    // listManipulationAfter
+    // =======================================================================
     // After, delete, update, create (data giving)
     // LIST
     const listManipulationAfter = () => {
@@ -70,14 +198,14 @@ function BlogCategoryList({ props, t, i18n }) {
 
     // UPDATE LOCAL-STORAGE(ID)
     const setUpdateBlogCategory = (data) => {
-        let { id, categoryName } = data;
+        let {id, categoryName} = data;
         localStorage.setItem('blog_category_update_id', id);
         localStorage.setItem('blog_category_category_name', categoryName);
     };
 
     // UPDATE LOCAL-STORAGE(ID)
     const setViewBlogCategory = (data) => {
-        let { id } = data;
+        let {id} = data;
         localStorage.setItem('blog_category_view_id', id);
     };
 
@@ -104,11 +232,11 @@ function BlogCategoryList({ props, t, i18n }) {
     // RETURN
     return (
         <React.Fragment>
-            <br />
-            <br />
-            <br />
-            <br />
-            <br />
+            <br/>
+            <br/>
+            <br/>
+            <br/>
+            <br/>
             <h1 class="text-center display-5 mt-3 mb-5">{t('blog_category_list')}</h1>
             <Link className="btn btn-primary ms-2 me-4" to="/blog/category/api/v1/create">
                 {t('create')}
