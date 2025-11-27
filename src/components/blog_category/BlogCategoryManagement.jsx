@@ -204,6 +204,50 @@ function BlogCategoryList({props, t, i18n}) {
         return pages;
     };
 
+    // =======================================================================
+    // MODAL HELPER FUNCTIONS
+    // =======================================================================
+    // CREATE MODAL ACTIVE
+    const openCreateModal = ()=>{
+        setModalMode("create");
+        setSelectedCategory(null);
+        setFormData({
+            categoryName: "",
+        })
+        setIsModalOpen(true);
+    }
+
+    // SHOW MODAL ACTIVE
+    const openShowModal = (category)=>{
+        setModalMode("show");
+        setSelectedCategory(category);
+        setIsModalOpen(true)
+    }
+
+    // EDIT MODAL ACTIVE
+    const openEditModal = (category)=>{
+        setModalMode("edit");
+        setSelectedCategory(category);
+        setFormData({
+            categoryName: category.categoryName || "",
+        })
+        setIsModalOpen(true)
+    }
+
+    // CLOSE MODAL ACTIVE
+    const closeModal = ()=>{
+        setIsModalOpen(false);
+        setSelectedCategory(null);
+        setFormData({
+            categoryName: "",
+        })
+        setModalMode("show")
+    }
+
+
+    // =======================================================================
+    // FORM HANDLE FUNCTIONS
+    // =======================================================================
 
     // =======================================================================
     // listManipulationAfter
