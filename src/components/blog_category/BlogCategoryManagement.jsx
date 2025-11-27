@@ -256,7 +256,6 @@ function BlogCategoryList({props, t, i18n}) {
     }))
     }; //end handleChange
 
-
     // =======================================================================
     // FORM SUBMIT FUNCTIONS ===> Formda gelen verileri İşlem yapmak
     // =======================================================================
@@ -299,6 +298,30 @@ function BlogCategoryList({props, t, i18n}) {
         }
     }; //end handleChange
 
+
+
+    // =======================================================================
+    // DELETE (SweetAlert2 + TOAST )
+    // =======================================================================
+    const setDeleteBlogCategory = (id) => {
+        if (window.confirm(id + ' nolu datayı silmek istiyor musunuz ?')) {
+            BlogCategoryApiService.objectApiDelete(id)
+                .then((response) => {
+                    if (response.status === 200) {
+                        listManipulationAfter();
+                        navigate('blog/category/list');
+                    }
+                })
+                .catch((error) => {
+                    console.error('Blog Category Delete: ', error);
+                    window.location = 'blog/category/list';
+                });
+        } else {
+            alert(`${id} nolu data silinmedi. `);
+            window.location = 'blog/category/list';
+        }
+    }; // end setDeleteBlogCategory
+
     // =======================================================================
     // listManipulationAfter
     // =======================================================================
@@ -336,25 +359,7 @@ function BlogCategoryList({props, t, i18n}) {
         localStorage.setItem('blog_category_view_id', id);
     };
 
-    // DELETE
-    const setDeleteBlogCategory = (id) => {
-        if (window.confirm(id + ' nolu datayı silmek istiyor musunuz ?')) {
-            BlogCategoryApiService.objectApiDelete(id)
-                .then((response) => {
-                    if (response.status === 200) {
-                        listManipulationAfter();
-                        navigate('blog/category/list');
-                    }
-                })
-                .catch((error) => {
-                    console.error('Blog Category Delete: ', error);
-                    window.location = 'blog/category/list';
-                });
-        } else {
-            alert(`${id} nolu data silinmedi. `);
-            window.location = 'blog/category/list';
-        }
-    }; // end setDeleteBlogCategory
+
 
     // RETURN
     return (
