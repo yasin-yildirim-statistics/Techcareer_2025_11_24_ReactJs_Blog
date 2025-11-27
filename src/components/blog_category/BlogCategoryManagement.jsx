@@ -1,8 +1,13 @@
 // REACT
 import React, {useEffect, useMemo, useState} from 'react';
+import Swal from "sweetalert2"
+
+//TOAST
+import toast from "react-hot-toast"
+import ReusabilityToast from "../../reusability/ReusabilityToast";
 
 // ROUTER
-import {useBlocker, useNavigate} from 'react-router-dom';
+// import {useNavigate} from 'react-router-dom';
 
 // API LIST CALL
 import BlogCategoryApiService from '../../services/BlogCategoryApiService';
@@ -11,17 +16,13 @@ import BlogCategoryApiService from '../../services/BlogCategoryApiService';
 import {withTranslation} from 'react-i18next';
 
 // IMPORT
-import Swal from "sweetalert2"
-import toast from "react-hot-toast"
-import ReusabilityToast from "../../reusability/ReusabilityToast";
-import footerComponent from "../FooterComponent";
 
 // FUNCTION
 function BlogCategoryList({props, t, i18n}) {
     // FIELD
 
     // ROUTER
-    let navigate = useNavigate();
+    //let navigate = useNavigate();
 
     // STATE
     //const [] = React.useState();
@@ -96,11 +97,12 @@ function BlogCategoryList({props, t, i18n}) {
     // =======================================================================
     useEffect(() => {
         // Component Did Mount
-        fetchBlogList().then(
-            () => {
-                showToast("Blog Kategori Listeleme", "list");
-            }
-        ).catch(() => showToast("Blog Kategori Listelememedi", "list"));
+        fetchBlogList();
+        // fetchBlogList().then(
+        //     () => {
+        //         showToast("Blog Kategori Listeleme", "list");
+        //     }
+        // ).catch(() => showToast("Blog Kategori Listelememedi", "list"));
     }, []);
 
     // FUNCTION
@@ -157,8 +159,8 @@ function BlogCategoryList({props, t, i18n}) {
 
             // Backentten gelen gelen veriler
             const idStr = String(cat.categoryId ?? "").toLowerCase();
-            const nameStr = String(cat.categoryName ?? "").toLowerCase();
-            const dateStr = String(cat.systemCreatedDate ?? "").toLowerCase();
+            const nameStr = (cat.categoryName ?? "").toLowerCase();
+            const dateStr = (cat.systemCreatedDate ?? "").toLowerCase();
 
             return (
                 idStr.includes(normalized) ||
@@ -172,7 +174,7 @@ function BlogCategoryList({props, t, i18n}) {
         const pages = total === 0 ? 1 : Math.ceil(total / pageSize);
         const safeCurrentPage = Math.min(Math.max(1, currentPage), pages);
         const startIndex = (safeCurrentPage - 1) * pageSize;
-        const paged = filtered.slide(startIndex, startIndex + pageSize);
+        const paged = filtered.slice(startIndex, startIndex + pageSize);
 
         return {
             pageData: paged,
@@ -310,7 +312,7 @@ function BlogCategoryList({props, t, i18n}) {
         // Sweet Alert
         // if (window.confirm(id + ' nolu datayı silmek istiyor musunuz ?')) { }
         const result = await Swal.fire({
-            title: `${category.categoryName} Silinsin mi?`,
+            title: `"${category.categoryName}" Silinsin mi?`,
             text: "Bu işlemi geri alamazsın",
             icon: "warning",
             showCancelButton: true,
@@ -326,6 +328,8 @@ function BlogCategoryList({props, t, i18n}) {
         try {
             setError("");
             const response = await BlogCategoryApiService.objectApiDelete(category.categoryId);
+
+            // Server Success ise
             if (response.status === 200) {
                 await fetchBlogList();
                 closeModal();
@@ -342,11 +346,11 @@ function BlogCategoryList({props, t, i18n}) {
     // MODAL TITLE & BODY
     // =======================================================================
     const getModalTitle = () => {
-
         // Modal başlığı
         if (modalMode === "create") return "Yeni Blog Kategorisi Oluştur";
         if (modalMode === "edit") return "Yeni Blog Kategorisi Güncelle";
         return "Blog Kategorisi Detayı";
+    };
 
         // Modal Body
         const renderModalBody = () => {
@@ -354,24 +358,31 @@ function BlogCategoryList({props, t, i18n}) {
                 return (
                     <div className="mb-2">
                         <div className="mb-2">
-                            <strong>{t("blog_id")}: </strong>{" "} {selectedCategory.categoryId}
+                            <strong>{t("blog_id")}: </strong>
+                            {selectedCategory.categoryId}
                         </div>
 
                         <div className="mb-2">
-                            <strong>{t("blog_category_name")}: </strong>{" "} {selectedCategory.categoryName}
+                            <strong>{t("blog_category_name")}: </strong>{" "}
+                            {selectedCategory.categoryName}
                         </div>
 
                         <div className="mb-2">
-                            <strong>{t("date")}: </strong>{" "} {selectedCategory.systemCreatedDate || "-"}
+                            <strong>{t("date")}: </strong>
+                            {selectedCategory.systemCreatedDate || "-"}
                         </div>
                     </div>
                 ); //end return
             } //end if
+
+
             return (
                 <form onSubmit={handleSubmit()}>
                     {/*CATEGORY NAME*/}
                     <div className="mb-3">
-                        <label htmlFor="categoryName" className="form-label">
+                        <label
+                            htmlFor="categoryName"
+                            className="form-label">
                             {t("blog_category_name")}
                         </label>
                         <input
@@ -409,7 +420,7 @@ function BlogCategoryList({props, t, i18n}) {
                 </form>
             );  //end return
         } //end renderModalBody
-    } //end getModalTitle
+
 
     //////////////////////////////////////////////////////////////////////////
     // =======================================================================
@@ -423,7 +434,9 @@ function BlogCategoryList({props, t, i18n}) {
             <ReusabilityToast/>
 
             <br/>
-            <h1 className="text-center display-5 mt-3 mb-4 animate_animated animate_fadeInDown">{t('blog_category_list')}</h1>
+            <h1 className="text-center display-5 mt-3 mb-4 animate_animated animate_fadeInDown">
+                {t('blog_category_list')}
+            </h1>
 
             {/*Filter+ Datalist+Yeni kategori Butonu*/}
             <div className="container mb-3">
@@ -456,7 +469,7 @@ function BlogCategoryList({props, t, i18n}) {
                         <select
                             className="form-select"
                             value={pageSize}
-                            onchange={(e) => setPageSize(Number(e.target.valueOf))}
+                            onchange={(e) => setPageSize(Number(e.target.value))}
                             title="Filtreleme için"
                         >
                             <option value={5}>5 Veri Listele</option>
@@ -469,8 +482,9 @@ function BlogCategoryList({props, t, i18n}) {
 
                     {/*TOPLAM KAYIT*/}
                     <div className="col-md-5 text-md-end">
-                        <label htmlFor="" className="form-label d-block fw-semibold">Toplam
-                            Kayıt</label>
+                        <label htmlFor="" className="form-label d-block fw-semibold">
+                            Toplam Kayıt
+                        </label>
                     </div>
 
                     <div className="d-flex justify-content-md-end alig-items-center gap-3">
@@ -484,14 +498,11 @@ function BlogCategoryList({props, t, i18n}) {
                             {t("create")}
                         </button>
                     </div>
-                </div>
-                {/*row*/}
-            </div>
-            {/*container*/}
+                </div> {/*row*/}
+            </div> {/*container*/}
 
             {/*ALERT ERROR*/}
-            {
-                error && (
+            { error && (
                     <div className="alert alert-danger mt-1 mb-1 py-2 px-3 text-center">
                         {error}
                     </div>
@@ -499,10 +510,9 @@ function BlogCategoryList({props, t, i18n}) {
             }{/*end error*/}
 
             {/*LOADING ERROR*/}
-            {
-                loading ? (
+            {loading ? (
                     <div className="text-center my-5">
-                        <div className="spinner-border"/>
+                        <div className="spinner-border" role="status"/>
                     </div>
                 ) : (
                     <div className="table-responsive mt-3 container animate_animated animate__backInRight">
@@ -552,7 +562,6 @@ function BlogCategoryList({props, t, i18n}) {
                                         </td>
 
                                         <td>
-
                                             <button
                                                 type="button"
                                                 className="btn btn-outline-danger btn-sm"
@@ -575,6 +584,7 @@ function BlogCategoryList({props, t, i18n}) {
                             </table>
                         )} {/*end pageData.length*/}
 
+                        {/*PAGINATION /PAGE*/}
                         {totalItems > 0 && (
                             <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
                                 <div className="small text-muted">
@@ -660,7 +670,7 @@ function BlogCategoryList({props, t, i18n}) {
                                     onClick={closeModal}
                                 />
                             </div>
-                            <div className="modal-body">---</div>
+                            <div className="modal-body">{renderModalBody()}</div>
 
                             {modalMode==="show" && (
                                 <div className="modal-footer">
@@ -690,5 +700,4 @@ function BlogCategoryList({props, t, i18n}) {
 // HOC
 export default withTranslation()(BlogCategoryList);
 
-// renderModalBody
 // filtered.slide
